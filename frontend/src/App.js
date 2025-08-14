@@ -59,8 +59,8 @@ function App() {
       const searchTerm = filters.search.toLowerCase();
       result = result.filter(t => 
         t.description.toLowerCase().includes(searchTerm) ||
-        t.category.toLowerCase().includes(searchTerm))
-    }
+        t.category.toLowerCase().includes(searchTerm)
+   ) }
     
     if (filters.category !== 'all') {
       result = result.filter(t => t.category === filters.category);

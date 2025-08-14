@@ -12,14 +12,14 @@ import {
   Typography,
   useTheme
 } from '@mui/material';
-import { AddCircleOutline, Category, Paid, CalendarToday, AttachMoney } from '@mui/icons-material';
+import { AddCircleOutline, Paid, CalendarToday, AttachMoney } from '@mui/icons-material';
 
 const categories = {
   income: ['Salary', 'Freelance', 'Investment', 'Gift', 'Other'],
   expense: ['Food', 'Transport', 'Housing', 'Entertainment', 'Utilities', 'Other']
 };
 
-const StyledTextField = ({ icon, ...props }) => {
+const StyledTextField = ({ icon, borderColor, ...props }) => {
   const theme = useTheme();
   
   return (
@@ -36,6 +36,12 @@ const StyledTextField = ({ icon, ...props }) => {
       sx={{
         '& .MuiOutlinedInput-root': {
           borderRadius: 2,
+          '& fieldset': {
+            borderColor: borderColor || 'default',
+          },
+          '&:hover fieldset': {
+            borderColor: borderColor || 'default',
+          },
         }
       }}
       {...props}
@@ -113,6 +119,7 @@ function TransactionForm({ onSubmit }) {
               value={formData.amount}
               onChange={handleChange}
               required
+              borderColor={formData.type === 'income' ? 'success.main' : 'error.main'}
             />
             
             <StyledTextField
@@ -134,7 +141,14 @@ function TransactionForm({ onSubmit }) {
                   value={formData.type}
                   label="Type"
                   onChange={handleChange}
-                  sx={{ borderRadius: 2 }}
+                  sx={{ borderRadius: 2,
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: formData.type === 'income' ? 'success.main' : 'error.main',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: formData.type === 'income' ? 'success.main' : 'error.main',
+                    },
+                   }}
                 >
                   <MenuItem value="income">Income</MenuItem>
                   <MenuItem value="expense">Expense</MenuItem>
@@ -148,7 +162,15 @@ function TransactionForm({ onSubmit }) {
                   value={formData.category}
                   label="Category"
                   onChange={handleChange}
-                  sx={{ borderRadius: 2 }}
+                  sx={{ 
+                    borderRadius: 2,
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: formData.type === 'income' ? 'success.main' : 'error.main',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: formData.type === 'income' ? 'success.main' : 'error.main',
+                    },
+                  }}
                 >
                   {categories[formData.type].map(cat => (
                     <MenuItem key={cat} value={cat}>{cat}</MenuItem>

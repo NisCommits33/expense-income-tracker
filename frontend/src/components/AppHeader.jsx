@@ -1,19 +1,20 @@
-// src/components/AppHeader.jsx
 import React from 'react';
 import { 
   AppBar, 
   Toolbar, 
   Typography, 
   IconButton,
+  Button,
   useTheme
 } from '@mui/material';
 import { 
   AccountBalanceWallet, 
   Brightness4, 
-  Brightness7 
+  Brightness7,
+  Add
 } from '@mui/icons-material';
 
-const AppHeader = ({ darkMode, toggleDarkMode }) => {
+const AppHeader = ({ darkMode, toggleDarkMode, onAddTransaction }) => {
   const theme = useTheme();
   
   return (
@@ -36,6 +37,15 @@ const AppHeader = ({ darkMode, toggleDarkMode }) => {
         <Typography variant="h5" component="div" sx={{ flexGrow: 1 }}>
           Expense Tracker
         </Typography>
+        
+        <Button 
+          color="inherit" 
+          startIcon={<Add />}
+          onClick={onAddTransaction}
+          sx={{ mr: 2 }}
+        >
+          Add Transaction
+        </Button>
         
         <IconButton 
           onClick={toggleDarkMode} 

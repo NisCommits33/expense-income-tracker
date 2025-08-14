@@ -68,7 +68,7 @@ const theme = createTheme({
     
   },
   shape: {
-    borderRadius: 10 ,
+    borderRadius: 0,
   },
   components: {
     MuiButton: {
@@ -84,7 +84,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           // boxShadow: '0px 2px 10px rgba(0,0,0,0.05)',
-          transition: 'box-shadow 0.3s ease, transform 0.3s ease',
+          // transition: 'box-shadow 0.3s ease, transform 0.3s ease',
           '&:hover': {
             boxShadow: '0px 6px 15px rgba(0,0,0,0.1)',
           },
