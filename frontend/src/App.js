@@ -1,24 +1,63 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import { 
+  Container, 
+  CssBaseline, 
+  Box, 
+  styled,
+  useTheme
+} from '@mui/material';
+import TransactionForm from './components/TransactionForm';
+import TransactionList from './components/TransactionList';
+import BalanceDisplay from './components/BalanceDisplay';
+import AppHeader from './components/AppHeader';
+
+const StyledContainer = styled(Container)(({ theme }) => ({
+  paddingTop: theme.spacing(4),
+  paddingBottom: theme.spacing(4),
+}));
 
 function App() {
+  const [transactions, setTransactions] = useState([]);
+  const [filter, setFilter] = useState('all');
+  const theme = useTheme();
+
+  const addTransaction = (transaction) => {
+    setTransactions([transaction, ...transactions]);
+  };
+
+  const deleteTransaction = (id) => {
+    setTransactions(transactions.filter(t => t.id !== id));
+  };
+
+  const filteredTransactions = transactions.filter(t => {
+    if (filter === 'all') return true;
+    return t.type === filter;
+  });
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <CssBaseline />
+      <AppHeader />
+      <StyledContainer maxWidth="md">
+        <Box sx={{ 
+          display: 'grid', 
+          gap: theme.spacing(4),
+          gridTemplateColumns: { md: '1fr 1.5fr' },
+          alignItems: 'start'
+        }}>
+          <Box>
+            <BalanceDisplay transactions={transactions} />
+            <TransactionForm onSubmit={addTransaction} />
+          </Box>
+          <TransactionList 
+            transactions={filteredTransactions} 
+            onDelete={deleteTransaction}
+            filter={filter}
+            setFilter={setFilter}
+          />
+        </Box>
+      </StyledContainer>
+    </>
   );
 }
 
