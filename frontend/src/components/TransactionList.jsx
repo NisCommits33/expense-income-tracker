@@ -1,97 +1,36 @@
-import React from 'react';
+// src/components/TransactionList.jsx
+// import React from 'react';
 import { 
   Card, 
-  CardContent, 
-  Typography, 
-  IconButton,
-  Stack,
-  Chip,
+  Typography,
   Tabs,
   Tab,
-  Divider,
-  Avatar,
-  useTheme, Box
+  Box,
+  useTheme
 } from '@mui/material';
 import { 
-  Delete, 
-  ArrowUpward, 
-  ArrowDownward,
-  AttachMoney
+  AttachMoney,
+  SortByAlpha
 } from '@mui/icons-material';
-import { motion } from 'framer-motion';
+import TransactionItem from './TransactionItem';
+import React, { useState } from 'react';
 
-const MotionCard = motion(Card);
-
-const TransactionItem = ({ transaction, onDelete }) => {
+const TransactionList = ({ 
+  transactions, 
+  onDelete,
+  moveTransaction
+}) => {
   const theme = useTheme();
-  
-  return (
-    <MotionCard
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0 }}
-      layout
-      sx={{ mb: 2 }}
-    >
-      <CardContent sx={{ '&:last-child': { pb: 2 } }}>
-        <Stack direction="row" alignItems="center" spacing={2}>
-          <Avatar sx={{ 
-            bgcolor: transaction.type === 'income' 
-              ? theme.palette.success.light 
-              : theme.palette.error.light,
-            color: transaction.type === 'income' 
-              ? theme.palette.success.contrastText 
-              : theme.palette.error.contrastText
-          }}>
-            {transaction.type === 'income' ? <ArrowUpward /> : <ArrowDownward />}
-          </Avatar>
-          <Stack sx={{ flexGrow: 1 }}>
-            <Typography variant="subtitle1" fontWeight={500}>
-              {transaction.description}
-            </Typography>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Chip 
-                label={transaction.category} 
-                size="small" 
-                sx={{ 
-                  borderRadius: 1,
-                  bgcolor: theme.palette.action.selected,
-                  color: theme.palette.text.secondary
-                }} 
-              />
-              <Typography variant="caption" color="text.secondary">
-                {new Date(transaction.date).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric'
-                })}
-              </Typography>
-            </Stack>
-          </Stack>
-          <Typography 
-            variant="subtitle1" 
-            fontWeight={600}
-            color={transaction.type === 'income' ? 'success.main' : 'error.main'}
-          >
-            {transaction.type === 'income' ? '+' : '-'}
-            {transaction.amount.toFixed(2)}
-          </Typography>
-          <IconButton 
-            onClick={() => onDelete(transaction.id)}
-            size="small"
-            sx={{ color: theme.palette.error.main }}
-          >
-            <Delete fontSize="small" />
-          </IconButton>
-        </Stack>
-      </CardContent>
-    </MotionCard>
-  );
-};
+  const [filter, setFilter] = useState('all');
 
-const TransactionList = ({ transactions, onDelete, filter, setFilter }) => {
   const handleTabChange = (event, newValue) => {
     setFilter(newValue);
   };
+
+  const filteredTransactions = transactions.filter(t => {
+    if (filter === 'all') return true;
+    return t.type === filter;
+  });
 
   return (
     <Card elevation={0} sx={{ p: 2 }}>
@@ -106,7 +45,7 @@ const TransactionList = ({ transactions, onDelete, filter, setFilter }) => {
         <Tab label="Expenses" value="expense" />
       </Tabs>
       
-      {transactions.length === 0 ? (
+      {filteredTransactions.length === 0 ? (
         <Box sx={{ 
           display: 'flex', 
           flexDirection: 'column', 
@@ -115,18 +54,20 @@ const TransactionList = ({ transactions, onDelete, filter, setFilter }) => {
           color: 'text.secondary'
         }}>
           <AttachMoney sx={{ fontSize: 48, mb: 1, opacity: 0.5 }} />
-          <Typography>No transactions yet</Typography>
+          <Typography>No transactions found</Typography>
         </Box>
       ) : (
-        <Stack spacing={2}>
-          {transactions.map((transaction) => (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {filteredTransactions.map((transaction, index) => (
             <TransactionItem 
               key={transaction.id}
               transaction={transaction}
+              index={index}
               onDelete={onDelete}
+              moveTransaction={moveTransaction}
             />
           ))}
-        </Stack>
+        </Box>
       )}
     </Card>
   );
