@@ -1,11 +1,5 @@
-// src/App.jsx
-import React, { useState, useMemo, useEffect } from 'react';
-import { 
-  ThemeProvider, 
-  CssBaseline,
-  Container,
-  Box
-} from '@mui/material';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { ThemeProvider, CssBaseline, Container, Box } from '@mui/material';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { createAppTheme } from './theme';
@@ -16,22 +10,48 @@ import FinancialChart from './components/FinancialChart';
 import TransactionFilters from './components/TransactionFilters';
 import BalanceDisplay from './components/BalanceDisplay';
 
-// Sample categories
-const categories = {
+// Memoize categories to prevent recreation
+const CATEGORIES = {
   income: ['Salary', 'Freelance', 'Investment', 'Gift', 'Other'],
   expense: ['Food', 'Transport', 'Housing', 'Entertainment', 'Utilities', 'Other']
 };
 
+// Optimized filter functions
+const filterBySearch = (transactions, search) => {
+  if (!search) return transactions;
+  const term = search.toLowerCase();
+  return transactions.filter(t => 
+    t.description.toLowerCase().includes(term) ||
+    t.category.toLowerCase().includes(term)
+  );
+};
+
+const filterByType = (transactions, type) => {
+  return type === 'all' ? transactions : transactions.filter(t => t.type === type);
+};
+
+const sortTransactions = (transactions, sortMethod) => {
+  const copy = [...transactions];
+  switch (sortMethod) {
+    case 'newest': return copy.sort((a, b) => new Date(b.date) - new Date(a.date));
+    case 'oldest': return copy.sort((a, b) => new Date(a.date) - new Date(b.date));
+    case 'amount-high': return copy.sort((a, b) => b.amount - a.amount);
+    case 'amount-low': return copy.sort((a, b) => a.amount - b.amount);
+    default: return copy;
+  }
+};
+
 function App() {
-  const [darkMode, setDarkMode] = useState(() => {
-    // Check for saved preference
-    return localStorage.getItem('darkMode') === 'true';
-  });
+  // State initialization with lazy initial state
+  const [darkMode, setDarkMode] = useState(() => 
+    localStorage.getItem('darkMode') === 'true'
+  );
+
   const [transactions, setTransactions] = useState(() => {
-    // Load from localStorage
     const saved = localStorage.getItem('transactions');
     return saved ? JSON.parse(saved) : [];
   });
+
   const [filters, setFilters] = useState({
     search: '',
     category: 'all',
@@ -41,83 +61,68 @@ function App() {
     endDate: ''
   });
 
-  // Create theme
+  // Memoized theme
   const theme = useMemo(() => createAppTheme(darkMode ? 'dark' : 'light'), [darkMode]);
 
-  // Save preferences
+  // Debounced localStorage save
   useEffect(() => {
-    localStorage.setItem('darkMode', darkMode);
-    localStorage.setItem('transactions', JSON.stringify(transactions));
-  }, [darkMode, transactions]);
+    const timer = setTimeout(() => {
+      localStorage.setItem('transactions', JSON.stringify(transactions));
+      localStorage.setItem('darkMode', darkMode);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [transactions, darkMode]);
 
-  // Filter and sort transactions
+  // Optimized transaction processing pipeline
   const filteredTransactions = useMemo(() => {
-    let result = [...transactions];
+    let result = transactions;
     
-    // Apply filters
-    if (filters.search) {
-      const searchTerm = filters.search.toLowerCase();
-      result = result.filter(t => 
-        t.description.toLowerCase().includes(searchTerm) ||
-        t.category.toLowerCase().includes(searchTerm)
-   ) }
+    // Apply filters in optimal order (most selective first)
+    result = filterByType(result, filters.type);
+    result = filterBySearch(result, filters.search);
     
     if (filters.category !== 'all') {
       result = result.filter(t => t.category === filters.category);
     }
     
-    if (filters.type !== 'all') {
-      result = result.filter(t => t.type === filters.type);
-    }
-    
     if (filters.startDate) {
-      result = result.filter(t => new Date(t.date) >= new Date(filters.startDate));
+      const start = new Date(filters.startDate);
+      result = result.filter(t => new Date(t.date) >= start);
     }
     
     if (filters.endDate) {
-      result = result.filter(t => new Date(t.date) <= new Date(filters.endDate));
+      const end = new Date(filters.endDate);
+      result = result.filter(t => new Date(t.date) <= end);
     }
     
-    // Apply sorting
-    switch (filters.sort) {
-      case 'newest':
-        return result.sort((a, b) => new Date(b.date) - new Date(a.date));
-      case 'oldest':
-        return result.sort((a, b) => new Date(a.date) - new Date(b.date));
-      case 'amount-high':
-        return result.sort((a, b) => b.amount - a.amount);
-      case 'amount-low':
-        return result.sort((a, b) => a.amount - b.amount);
-      default:
-        return result;
-    }
+    return sortTransactions(result, filters.sort);
   }, [transactions, filters]);
 
-  // Handler functions
-  const addTransaction = (transaction) => {
-    setTransactions([transaction, ...transactions]);
-  };
+  // Memoized handler functions
+  const addTransaction = useCallback((transaction) => {
+    setTransactions(prev => [transaction, ...prev]);
+  }, []);
 
-  const deleteTransaction = (id) => {
-    setTransactions(transactions.filter(t => t.id !== id));
-  };
+  const deleteTransaction = useCallback((id) => {
+    setTransactions(prev => prev.filter(t => t.id !== id));
+  }, []);
 
-  const moveTransaction = (dragIndex, hoverIndex) => {
+  const moveTransaction = useCallback((dragIndex, hoverIndex) => {
     setTransactions(prev => {
-      const newTransactions = [...prev];
-      const [removed] = newTransactions.splice(dragIndex, 1);
-      newTransactions.splice(hoverIndex, 0, removed);
-      return newTransactions;
+      const newItems = [...prev];
+      const [removed] = newItems.splice(dragIndex, 1);
+      newItems.splice(hoverIndex, 0, removed);
+      return newItems;
     });
-  };
+  }, []);
 
-  const handleFilterChange = (name, value) => {
+  const handleFilterChange = useCallback((name, value) => {
     setFilters(prev => ({ ...prev, [name]: value }));
-  };
+  }, []);
 
-  const toggleDarkMode = () => {
+  const toggleDarkMode = useCallback(() => {
     setDarkMode(prev => !prev);
-  };
+  }, []);
 
   return (
     <ThemeProvider theme={theme}>
@@ -135,31 +140,21 @@ function App() {
             gridTemplateColumns: { md: '1fr 1.5fr' },
             alignItems: 'start'
           }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <BalanceDisplay transactions={transactions} />
-              <TransactionForm 
-                onSubmit={addTransaction} 
-                categories={categories} 
-              />
-            </Box>
+            {/* Left Column */}
+            <MemoizedLeftColumn 
+              transactions={transactions}
+              addTransaction={addTransaction}
+            />
             
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <FinancialChart transactions={transactions} />
-              
-              <TransactionFilters
-                filters={filters}
-                onFilterChange={handleFilterChange}
-                categories={Object.keys(categories).reduce((acc, type) => {
-                  return [...acc, ...categories[type]];
-                }, [])}
-              />
-              
-              <TransactionList 
-                transactions={filteredTransactions} 
-                onDelete={deleteTransaction}
-                moveTransaction={moveTransaction}
-              />
-            </Box>
+            {/* Right Column */}
+            <MemoizedRightColumn
+              transactions={transactions}
+              filteredTransactions={filteredTransactions}
+              filters={filters}
+              handleFilterChange={handleFilterChange}
+              deleteTransaction={deleteTransaction}
+              moveTransaction={moveTransaction}
+            />
           </Box>
         </Container>
       </DndProvider>
@@ -167,4 +162,35 @@ function App() {
   );
 }
 
-export default App;
+// Optimized sub-components
+const MemoizedLeftColumn = React.memo(({ transactions, addTransaction }) => (
+  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+    <BalanceDisplay transactions={transactions} />
+    <TransactionForm onSubmit={addTransaction} categories={CATEGORIES} />
+  </Box>
+));
+
+const MemoizedRightColumn = React.memo(({
+  transactions,
+  filteredTransactions,
+  filters,
+  handleFilterChange,
+  deleteTransaction,
+  moveTransaction
+}) => (
+  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+    <FinancialChart transactions={transactions} />
+    <TransactionFilters
+      filters={filters}
+      onFilterChange={handleFilterChange}
+      categories={Object.keys(CATEGORIES).flatMap(type => CATEGORIES[type])}
+    />
+    <TransactionList 
+      transactions={filteredTransactions} 
+      onDelete={deleteTransaction}
+      moveTransaction={moveTransaction}
+    />
+  </Box>
+));
+
+export default React.memo(App);
