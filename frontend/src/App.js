@@ -12,7 +12,7 @@ import BalanceDisplay from './components/BalanceDisplay';
 
 // Memoize categories to prevent recreation
 const CATEGORIES = {
-  income: ['Salary', 'Freelance', 'Investment', 'Gift', 'Other'],
+  income: ['Salary', 'Freelance', 'Investment', 'Gift', 'lend','Other'],
   expense: ['Food', 'Transport', 'Housing', 'Entertainment', 'Utilities', 'Other']
 };
 
